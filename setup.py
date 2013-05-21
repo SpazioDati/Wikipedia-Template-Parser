@@ -13,7 +13,8 @@ if sys.argv[-1] == "publish":
     sys.exit()
 
 required = [
-    'requests==1.2.0'
+    'requests==1.2.0',
+    'pyquery==1.2.4',
 ]
 
 setup(

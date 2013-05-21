@@ -5,6 +5,7 @@ A simple library for extracting data from Wikipedia templates
 
 import re
 import requests
+from pyquery import PyQuery as pq
 
 
 def clean_wiki_links(s):
@@ -18,6 +19,20 @@ def clean_wiki_links(s):
     # clean links with renaming
     s = re.sub(r'\[\[[^\|\]]+\|([^\]]+)\]\]', r'\1', s)
     return s
+
+
+def clean_ref(s):
+    """
+    Cleans <ref> tags
+    """
+    text = pq(s)
+    res = []
+    for el in text.contents():
+        if isinstance(el, basestring):
+            res.append(el.strip())
+        elif el.tag != "ref":
+            res.append(clean_ref(el))
+    return " ".join(res)
 
 
 def get_wikitext_from_api(page, lang='en'):
@@ -51,6 +66,7 @@ def data_from_templates(page, lang='en'):
     """
     store = []
     content = ' '.join(get_wikitext_from_api(page, lang).split())
+    content = clean_ref(content)
     match = re.findall(r'\{\{([^}]+)\}\}', content)
     for template_string in match:
         anon_counter = 0
