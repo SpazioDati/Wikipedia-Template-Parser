@@ -15,6 +15,7 @@ if sys.argv[-1] == "publish":
 required = [
     'requests==1.2.0',
     'pyquery==1.2.4',
+    'mwparserfromhell==0.1.1',
 ]
 
 setup(

@@ -6,6 +6,7 @@ A simple library for extracting data from Wikipedia templates
 import re
 import requests
 from pyquery import PyQuery as pq
+import mwparserfromhell
 
 
 def clean_wiki_links(s):
@@ -67,8 +68,10 @@ def data_from_templates(page, lang='en'):
     store = []
     content = ' '.join(get_wikitext_from_api(page, lang).split())
     content = clean_ref(content)
-    match = re.findall(r'\{\{([^}]+)\}\}', content)
+    #match = re.findall(r'\{\{([^}]+)\}\}', content)
+    match = mwparserfromhell.parse(content).filter_templates()
     for template_string in match:
+        template_string = template_string[2:-2]
         anon_counter = 0
         template_string = clean_wiki_links(template_string)
         template_string = template_string.split("|")
