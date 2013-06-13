@@ -115,6 +115,59 @@ def pages_with_template(template, lang='en', eicontinue=None):
         result += pages_with_template(template, lang, eicontinue)
     return result
 
+def pages_in_category(catname, lang='en', maxdepth=0, \
+                      cmcontinue=None, subcats=None, visitedcats=None):
+    """
+    Returns a list of pages in a given category and its subcategories
+    parameters:
+    catname: category name with prefix (e.g. "Categoria:Chiese_di_Prato")
+    lang: Wikipedia language code (e.g. "it"), optional (default is "en")
+    maxdepth: specifies the number (a non-negative integer) of levels 
+              to descend at most in the category tree starting from catname.
+    """
+    url = 'http://{}.wikipedia.org/w/api.php'.format(lang)
+    params = {
+        'action': 'query',
+        'list': 'categorymembers',
+        'cmtitle': catname,
+        'cmlimit': '500',
+        'format':'json'
+    }
+    if visitedcats is None:
+        visitedcats = list()
+    if cmcontinue:
+        params['cmcontinue'] = cmcontinue
+    res = requests.get(url, params=params)
+    if not res.ok:
+        res.raise_for_status()
+    result = [x['title'].encode('utf-8') for x in res.json()['query']['categorymembers'] \
+                if x['ns'] == 0]
+    subcats = [x['title'].replace(' ','_')
+                for x in res.json()['query']['categorymembers'] \
+                if x['ns'] == 14 and x['title'] not in visitedcats]
+    try:
+        cmcontinue = res.json()['query-continue']['categorymembers']['cmcontinue']
+    except KeyError:
+        cmcontinue = None
+    if cmcontinue:
+        result += pages_in_category(catname,
+                                    lang=lang,
+                                    maxdepth=maxdepth,
+                                    cmcontinue=cmcontinue,
+                                    subcats=subcats,
+                                    visitedcats=visitedcats)
+    maxdepth -= 1
+    if maxdepth >= 0:
+        if subcats:
+            for cat in subcats:
+                result += pages_in_category(cat,
+                                    lang=lang,
+                                    maxdepth=maxdepth,
+                                    cmcontinue=cmcontinue,
+                                    subcats=subcats,
+                                    visitedcats=visitedcats)
+                visitedcats.append(cat)
+    return result
 
 if __name__ == "__main__":
     print pages_with_template("Template:Edificio_religioso", "it")
@@ -122,3 +175,8 @@ if __name__ == "__main__":
     print data_from_templates("Volano_(Italia)", "it")
     print
     print data_from_templates("Cattedrale di San Vigilio", "it")
+    print
+    print pages_in_category("Categoria:Architetture_religiose_d'Italia", "it", maxdepth=20):
+    print
+    print pages_in_category("Categoria:Chiese_di_Prato","it")
+
