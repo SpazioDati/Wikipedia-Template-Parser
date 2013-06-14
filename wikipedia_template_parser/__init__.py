@@ -176,7 +176,7 @@ if __name__ == "__main__":
     print
     print data_from_templates("Cattedrale di San Vigilio", "it")
     print
-    print pages_in_category("Categoria:Architetture_religiose_d'Italia", "it", maxdepth=20):
+    print pages_in_category("Categoria:Architetture_religiose_d'Italia", "it", maxdepth=20)
     print
     print pages_in_category("Categoria:Chiese_di_Prato","it")
 
