@@ -16,12 +16,22 @@ from wikipedia_template_parser import pages_with_template
 pages_with_template("Template:Infobox_Italian_comune", lang="en")
 ```
 
-
-Get key/vaule data from all templates used in the given page
+Get key/value data from all templates used in the given page
 ```python
 from wikipedia_template_parser import data_from_templates
 
 data_from_templates("Trento", lang="it")
+```
+
+For pages containing the {{coord}} template (it.wiki), data are parsed 
+and returned as a dictionary with 'lat' and 'lon' keys:
+```python
+from wikipedia_template_parser import data_from_templates
+
+data_from_templates("Cattedrale di San Vigilio","it")
+
+[{'data': {'lat': '46.067017', 'lon': '11.121385'}, 'name': u'coord'}, 
+(...)]
 ```
 
 Get all pages in a given category. A maxdepth parameter can

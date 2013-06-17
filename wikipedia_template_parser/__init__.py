@@ -5,6 +5,7 @@ A simple library for extracting data from Wikipedia templates
 
 import re
 import requests
+import urllib
 from pyquery import PyQuery as pq
 import mwparserfromhell
 
@@ -45,7 +46,7 @@ def get_wikitext_from_api(page, lang='en'):
     params = {
         'action': 'query',
         'prop': 'revisions',
-        'titles': page,
+        'titles': urllib.unquote(page.replace(' ','_')),
         'rvprop': 'content',
         'rvlimit': '1',
         'format': 'json',
@@ -56,6 +57,71 @@ def get_wikitext_from_api(page, lang='en'):
     json_pages = res.json()['query']['pages']
     return json_pages.values()[0]['revisions'][0]['*']
 
+def extract_data_from_coord(template):
+
+    coord={'lat': '', 'lon': ''}
+    optionalpars= ['dim', 'globe','region','scale','source','type','display']
+
+    todel=set()
+    for k,v in template.iteritems():
+        for op in optionalpars:
+            if (op in v) or (op in k):
+                todel.add(k)
+                break
+
+    for k in todel:
+        del template[k]
+
+    anonpars=[tpar for tpar in template.keys() if 'anon_' in tpar]
+    for ap in anonpars:
+        template[int(ap.strip('anon_'))]=template[ap]
+        del template[ap]
+
+    parsnums=[int(p.strip('anon_')) for p in anonpars]
+    parcount=len(anonpars)
+    startpar=min(parsnums)
+    stoppar=max(parsnums)
+
+    gglat=float(template[startpar])
+    mmlat=0
+    sslat=0
+    gglong=0
+    mmlong=0
+    sslong=0
+    dirlat=''
+    dirlong=''
+    if parcount == 2:
+        gglong=float(template[startpar+1])
+    elif parcount == 4:
+        dirlat=str(template[startpar+1])
+        gglong=float(template[startpar+2])
+        dirlong=str(template[startpar+3])
+    elif parcount == 6:
+        mmlat=float(template[startpar+1])
+        dirlat=str(template[startpar+2])
+        gglong=float(template[startpar+3])
+        mmlong=float(template[startpar+4])
+        dirlong=str(template[startpar+5])
+    elif parcount == 8:
+        mmlat=float(template[startpar+1])
+        sslat=float(template[startpar+2])
+        dirlat=str(template[startpar+3])
+        gglong=float(template[startpar+4])
+        mmlong=float(template[startpar+5])
+        sslong=float(template[startpar+6])
+        dirlong=str(template[startpar+7])
+
+    deglat=float(gglat)+float(mmlat)/60.0+float(sslat)/3600.0
+    deglong=float(gglong)+float(mmlong)/60.0+float(sslong)/3600.0
+
+    if dirlat == "S":
+        deglat =-deglat
+    if dirlong == "W":
+        deglong =-deglong
+
+    coord['lat']=str(deglat)
+    coord['lon']=str(deglong)
+    return coord
 
 def data_from_templates(page, lang='en'):
     """
@@ -75,7 +141,7 @@ def data_from_templates(page, lang='en'):
         anon_counter = 0
         template_string = clean_wiki_links(template_string)
         template_string = template_string.split("|")
-        name, key_values = template_string[0], template_string[1:]
+        name, key_values = template_string[0].strip(), template_string[1:]
         data = {}
         for key_value in key_values:
             try:
@@ -85,6 +151,8 @@ def data_from_templates(page, lang='en'):
                 key = 'anon_{}'.format(anon_counter)
                 value = key_value
             data[key.strip()] = value.strip()
+        if name.lower() == 'coord':
+            data = extract_data_from_coord(data)
         store.append({'name': name, 'data': data})
     return store
 
@@ -179,4 +247,9 @@ if __name__ == "__main__":
     print pages_in_category("Categoria:Architetture_religiose_d'Italia", "it", maxdepth=20)
     print
     print pages_in_category("Categoria:Chiese_di_Prato","it")
-
+    print
+    print data_from_templates("Chiesa di San Pantaleo (Zoagli)","it")
+    print
+    print data_from_templates(
+            urllib.quote("Chiesa di San Pantaleo (Zoagli)"),"it"
+            )
