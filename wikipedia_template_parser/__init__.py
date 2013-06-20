@@ -145,7 +145,7 @@ def data_from_templates(page, lang='en'):
         data = {}
         for key_value in key_values:
             try:
-                key, value = key_value.split("=")
+                key, value = key_value.split("=", 1)
             except ValueError:
                 anon_counter += 1
                 key = 'anon_{}'.format(anon_counter)
