@@ -46,10 +46,11 @@ def get_wikitext_from_api(page, lang='en'):
     params = {
         'action': 'query',
         'prop': 'revisions',
-        'titles': urllib.unquote(page.replace(' ','_')),
+        'titles': urllib.unquote(page.replace(' ', '_')),
         'rvprop': 'content',
         'rvlimit': '1',
         'format': 'json',
+        'redirects': True
     }
     res = requests.get(url, params=params)
     if not res.ok:
@@ -57,13 +58,14 @@ def get_wikitext_from_api(page, lang='en'):
     json_pages = res.json()['query']['pages']
     return json_pages.values()[0]['revisions'][0]['*']
 
+
 def extract_data_from_coord(template):
 
-    coord={'lat': '', 'lon': ''}
-    optionalpars= ['dim', 'globe','region','scale','source','type','display']
+    coord = {'lat': '', 'lon': ''}
+    optionalpars = ['dim', 'globe', 'region', 'scale', 'source', 'type', 'display']
 
-    todel=set()
-    for k,v in template.iteritems():
+    todel = set()
+    for k, v in template.iteritems():
         for op in optionalpars:
             if (op in v) or (op in k):
                 todel.add(k)
@@ -72,56 +74,56 @@ def extract_data_from_coord(template):
     for k in todel:
         del template[k]
 
-    anonpars=[tpar for tpar in template.keys() if 'anon_' in tpar]
+    anonpars = [tpar for tpar in template.keys() if 'anon_' in tpar]
     for ap in anonpars:
-        template[int(ap.strip('anon_'))]=template[ap]
+        template[int(ap.strip('anon_'))] = template[ap]
         del template[ap]
 
-    parsnums=[int(p.strip('anon_')) for p in anonpars]
-    parcount=len(anonpars)
-    startpar=min(parsnums)
-    stoppar=max(parsnums)
+    parsnums = [int(p.strip('anon_')) for p in anonpars]
+    parcount = len(anonpars)
+    startpar = min(parsnums)
 
-    gglat=float(template[startpar])
-    mmlat=0
-    sslat=0
-    gglong=0
-    mmlong=0
-    sslong=0
-    dirlat=''
-    dirlong=''
+    gglat = float(template[startpar])
+    mmlat = 0
+    sslat = 0
+    gglong = 0
+    mmlong = 0
+    sslong = 0
+    dirlat = ''
+    dirlong = ''
     if parcount == 2:
-        gglong=float(template[startpar+1])
+        gglong = float(template[startpar+1])
     elif parcount == 4:
-        dirlat=str(template[startpar+1])
-        gglong=float(template[startpar+2])
-        dirlong=str(template[startpar+3])
+        dirlat = str(template[startpar+1])
+        gglong = float(template[startpar+2])
+        dirlong = str(template[startpar+3])
     elif parcount == 6:
-        mmlat=float(template[startpar+1])
-        dirlat=str(template[startpar+2])
-        gglong=float(template[startpar+3])
-        mmlong=float(template[startpar+4])
-        dirlong=str(template[startpar+5])
+        mmlat = float(template[startpar+1])
+        dirlat = str(template[startpar+2])
+        gglong = float(template[startpar+3])
+        mmlong = float(template[startpar+4])
+        dirlong = str(template[startpar+5])
     elif parcount == 8:
-        mmlat=float(template[startpar+1])
-        sslat=float(template[startpar+2])
-        dirlat=str(template[startpar+3])
-        gglong=float(template[startpar+4])
-        mmlong=float(template[startpar+5])
-        sslong=float(template[startpar+6])
-        dirlong=str(template[startpar+7])
+        mmlat = float(template[startpar+1])
+        sslat = float(template[startpar+2])
+        dirlat = str(template[startpar+3])
+        gglong = float(template[startpar+4])
+        mmlong = float(template[startpar+5])
+        sslong = float(template[startpar+6])
+        dirlong = str(template[startpar+7])
 
-    deglat=float(gglat)+float(mmlat)/60.0+float(sslat)/3600.0
-    deglong=float(gglong)+float(mmlong)/60.0+float(sslong)/3600.0
+    deglat = float(gglat)+float(mmlat)/60.0+float(sslat)/3600.0
+    deglong = float(gglong)+float(mmlong)/60.0+float(sslong)/3600.0
 
     if dirlat == "S":
-        deglat =-deglat
+        deglat = - deglat
     if dirlong == "W":
-        deglong =-deglong
+        deglong = - deglong
 
-    coord['lat']=str(deglat)
-    coord['lon']=str(deglong)
+    coord['lat'] = str(deglat)
+    coord['lon'] = str(deglong)
     return coord
+
 
 def data_from_templates(page, lang='en'):
     """
@@ -183,14 +185,15 @@ def pages_with_template(template, lang='en', eicontinue=None):
         result += pages_with_template(template, lang, eicontinue)
     return result
 
-def pages_in_category(catname, lang='en', maxdepth=0, \
+
+def pages_in_category(catname, lang='en', maxdepth=0,
                       cmcontinue=None, subcats=None, visitedcats=None):
     """
     Returns a list of pages in a given category and its subcategories
     parameters:
     catname: category name with prefix (e.g. "Categoria:Chiese_di_Prato")
     lang: Wikipedia language code (e.g. "it"), optional (default is "en")
-    maxdepth: specifies the number (a non-negative integer) of levels 
+    maxdepth: specifies the number (a non-negative integer) of levels
               to descend at most in the category tree starting from catname.
     """
     url = 'http://{}.wikipedia.org/w/api.php'.format(lang)
@@ -199,7 +202,7 @@ def pages_in_category(catname, lang='en', maxdepth=0, \
         'list': 'categorymembers',
         'cmtitle': catname,
         'cmlimit': '500',
-        'format':'json'
+        'format': 'json'
     }
     if visitedcats is None:
         visitedcats = list()
@@ -208,11 +211,11 @@ def pages_in_category(catname, lang='en', maxdepth=0, \
     res = requests.get(url, params=params)
     if not res.ok:
         res.raise_for_status()
-    result = [x['title'].encode('utf-8') for x in res.json()['query']['categorymembers'] \
-                if x['ns'] == 0]
-    subcats = [x['title'].replace(' ','_')
-                for x in res.json()['query']['categorymembers'] \
-                if x['ns'] == 14 and x['title'] not in visitedcats]
+    result = [x['title'].encode('utf-8') for x in res.json()['query']['categorymembers']
+              if x['ns'] == 0]
+    subcats = [x['title'].replace(' ', '_')
+               for x in res.json()['query']['categorymembers']
+               if x['ns'] == 14 and x['title'] not in visitedcats]
     try:
         cmcontinue = res.json()['query-continue']['categorymembers']['cmcontinue']
     except KeyError:
@@ -229,11 +232,11 @@ def pages_in_category(catname, lang='en', maxdepth=0, \
         if subcats:
             for cat in subcats:
                 result += pages_in_category(cat,
-                                    lang=lang,
-                                    maxdepth=maxdepth,
-                                    cmcontinue=cmcontinue,
-                                    subcats=subcats,
-                                    visitedcats=visitedcats)
+                                            lang=lang,
+                                            maxdepth=maxdepth,
+                                            cmcontinue=cmcontinue,
+                                            subcats=subcats,
+                                            visitedcats=visitedcats)
                 visitedcats.append(cat)
     return result
 
@@ -246,10 +249,10 @@ if __name__ == "__main__":
     print
     print pages_in_category("Categoria:Architetture_religiose_d'Italia", "it", maxdepth=20)
     print
-    print pages_in_category("Categoria:Chiese_di_Prato","it")
+    print pages_in_category("Categoria:Chiese_di_Prato", "it")
     print
-    print data_from_templates("Chiesa di San Pantaleo (Zoagli)","it")
+    print data_from_templates("Chiesa di San Pantaleo (Zoagli)", "it")
     print
-    print data_from_templates(
-            urllib.quote("Chiesa di San Pantaleo (Zoagli)"),"it"
-            )
+    print data_from_templates(urllib.quote("Chiesa di San Pantaleo (Zoagli)"), "it")
+    print
+    print get_wikitext_from_api("Chiesa di San Petronio", "it")
