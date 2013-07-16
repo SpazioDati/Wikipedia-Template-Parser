@@ -56,7 +56,14 @@ def get_wikitext_from_api(page, lang='en'):
     if not res.ok:
         res.raise_for_status()
     json_pages = res.json()['query']['pages']
-    return json_pages.values()[0]['revisions'][0]['*']
+
+    try:
+        result = json_pages.values()[0]['revisions'][0]['*']
+    except:
+        raise ValueError('Page {page} does not exist on {lang}.wikipedia'.format(
+                         page=page, lang=lang))
+
+    return result
 
 
 def extract_data_from_coord(template):
