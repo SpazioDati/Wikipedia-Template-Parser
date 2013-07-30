@@ -131,6 +131,8 @@ def extract_data_from_coord(template):
     coord['lon'] = str(deglong)
     return coord
 
+CURLY = re.compile(r'\{\{([^\}]*)\}\}')
+
 
 def data_from_templates(page, lang='en'):
     """
@@ -149,6 +151,14 @@ def data_from_templates(page, lang='en'):
         template_string = template_string[2:-2]
         anon_counter = 0
         template_string = clean_wiki_links(template_string)
+        if CURLY.search(template_string):
+            for match in CURLY.finditer(template_string):
+                start = match.start()
+                stop = match.end()
+                template_string = template_string[:start] + '{{' + \
+                    match.group(1).replace('|', '~') + '}}' + \
+                    template_string[stop:]
+
         template_string = template_string.split("|")
         name, key_values = template_string[0].strip(), template_string[1:]
         data = {}
@@ -253,6 +263,8 @@ if __name__ == "__main__":
     print data_from_templates("Volano_(Italia)", "it")
     print
     print data_from_templates("Cattedrale di San Vigilio", "it")
+    print
+    print data_from_templates("Telenorba", "it")
     print
     print pages_in_category("Categoria:Architetture_religiose_d'Italia", "it", maxdepth=20)
     print
