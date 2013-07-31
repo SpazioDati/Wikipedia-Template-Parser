@@ -144,11 +144,11 @@ def data_from_templates(page, lang='en'):
     """
     store = []
     content = ' '.join(get_wikitext_from_api(page, lang).split())
-    content = clean_ref(content)
     #match = re.findall(r'\{\{([^}]+)\}\}', content)
     match = mwparserfromhell.parse(content).filter_templates()
     for template_string in match:
         template_string = template_string[2:-2]
+        template_string = clean_ref(template_string)
         anon_counter = 0
         template_string = clean_wiki_links(template_string)
         if CURLY.search(template_string):
@@ -260,12 +260,6 @@ def pages_in_category(catname, lang='en', maxdepth=0,
 if __name__ == "__main__":
     print pages_with_template("Template:Edificio_religioso", "it")
     print
-    print data_from_templates("Volano_(Italia)", "it")
-    print
-    print data_from_templates("Cattedrale di San Vigilio", "it")
-    print
-    print data_from_templates("Telenorba", "it")
-    print
     print pages_in_category("Categoria:Architetture_religiose_d'Italia", "it", maxdepth=20)
     print
     print pages_in_category("Categoria:Chiese_di_Prato", "it")
@@ -275,3 +269,11 @@ if __name__ == "__main__":
     print data_from_templates(urllib.quote("Chiesa di San Pantaleo (Zoagli)"), "it")
     print
     print get_wikitext_from_api("Chiesa di San Petronio", "it")
+    print
+    print data_from_templates("Volano_(Italia)", "it")
+    print
+    print data_from_templates("Cattedrale di San Vigilio", "it")
+    print
+    print data_from_templates("Telenorba", "it")
+    print
+    print data_from_templates("Falchi Ugento", "it")
