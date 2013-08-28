@@ -5,9 +5,12 @@ A simple library for extracting data from Wikipedia templates
 
 import re
 import requests
+import logging
 import urllib
 from pyquery import PyQuery as pq
 import mwparserfromhell
+
+logger = logging.getLogger(__name__)
 
 
 def clean_wiki_links(s):
@@ -67,7 +70,6 @@ def get_wikitext_from_api(page, lang='en'):
 
 
 def extract_data_from_coord(template):
-
     coord = {'lat': '', 'lon': ''}
     optionalpars = ['dim', 'globe', 'region', 'scale', 'source', 'type', 'display']
 
@@ -131,10 +133,29 @@ def extract_data_from_coord(template):
     coord['lon'] = str(deglong)
     return coord
 
+
+def augment_data_with_coords(data, coords_fiels):
+    from coordinates import parseDMS
+
+    wanted_fields = [field for sublist in coords_fiels for field in sublist]
+
+    values = [data.get(field, '') for field in wanted_fields]
+
+    if not any(values):
+        return False
+
+    try:
+        coords_data = parseDMS(*values)[0]
+        data['lon'] = coords_data['dec-long']
+        data['lat'] = coords_data['dec-lat']
+    except:
+        logger.exception("Can't find coordinates")
+
+
 CURLY = re.compile(r'\{\{([^\}]*)\}\}')
 
 
-def data_from_templates(page, lang='en'):
+def data_from_templates(page, lang='en', extra_coords=None):
     """
     Given a page title and the language returns a list with the data of every
     template included in the page.
@@ -170,8 +191,12 @@ def data_from_templates(page, lang='en'):
                 key = 'anon_{}'.format(anon_counter)
                 value = key_value
             data[key.strip()] = value.strip()
-        if name.lower() == 'coord':
+        cleaned_name = name.lower().replace('_', ' ')
+        if cleaned_name == 'coord':
             data = extract_data_from_coord(data)
+        if cleaned_name in extra_coords:
+            augment_data_with_coords(data, extra_coords[cleaned_name])
+
         store.append({'name': name, 'data': data})
     return store
 
