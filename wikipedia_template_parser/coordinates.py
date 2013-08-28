@@ -205,7 +205,6 @@ def convert_dms2dec(direction, degrees_str, minutes_str, seconds_str):
     minutes = _float_or_value(minutes_str)
     seconds = _float_or_value(seconds_str)
 
-    print '=== DIRECTION', direction
     ## lua version is:
     # direction = mw.ustring.gsub(direction, '^[ ]*(.-)[ ]*$', '%1')
 
