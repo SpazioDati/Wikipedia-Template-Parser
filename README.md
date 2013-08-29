@@ -28,11 +28,28 @@ and returned as a dictionary with 'lat' and 'lon' keys:
 ```python
 from wikipedia_template_parser import data_from_templates
 
-data_from_templates("Cattedrale di San Vigilio","it")
+data_from_templates("Cattedrale di San Vigilio", "it")
 
 [{'data': {'lat': '46.067017', 'lon': '11.121385'}, 'name': u'coord'}, 
 (...)]
 ```
+
+If the coordinates are embedded in another template, like for [Template:Infobox_struttura_militare/man](http://it.wikipedia.org/wiki/Template:Infobox_struttura_militare/man) 
+you can:
+```python
+from wikipedia_template_parser import data_from_templates
+
+data_from_templates("Forte Campo Luserna", "it", extra_coords={
+                    'infobox struttura militare': [  # lowercase and with no underscores
+                        ['LatGradi', 'LatPrimi', 'LatSecondi', 'LatNS'],  # the latitude attributes in the template data
+                        ['LongGradi', 'LongPrimi', 'LongSecondi', 'LongEW'],  # the longitude ones
+                    ]
+                })
+
+[{'data': {'lat': '45.926814', 'lon': '11.3366', (...)}, 'name': u'Infobox_struttura_militare'}, 
+(...)]
+```
+
 
 Get all pages in a given category. A maxdepth parameter can
 be specified, if omitted it is set to zero (subcategories are not visited)
