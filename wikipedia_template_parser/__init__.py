@@ -194,8 +194,9 @@ def data_from_templates(page, lang='en', extra_coords=None):
         cleaned_name = name.lower().replace('_', ' ')
         if cleaned_name == 'coord':
             data = extract_data_from_coord(data)
-        if cleaned_name in extra_coords:
-            augment_data_with_coords(data, extra_coords[cleaned_name])
+        if extra_coords:
+            if cleaned_name in extra_coords:
+                augment_data_with_coords(data, extra_coords[cleaned_name])
 
         store.append({'name': name, 'data': data})
     return store
