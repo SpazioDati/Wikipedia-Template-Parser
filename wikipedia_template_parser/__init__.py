@@ -202,11 +202,36 @@ def data_from_templates(page, lang='en', extra_coords=None):
     return store
 
 
-def pages_with_template(template, lang='en', eicontinue=None):
+def pages_with_template(template, lang='en', eicontinue=None,
+                        skip_users_and_templates=True):
     """
     Returns a list of pages that use the given template
+
+    template is something like 'Template:Infobox_museum'
+
+    skip_users_and_templates allows you to skip users and temolates page like
+    * http://en.wikipedia.org/wiki/User:<name>
+    * http://en.wikipedia.org/wiki/User_talk:<name>
+    * http://en.wikipedia.org/wiki/Template:<name>
+    * http://en.wikipedia.org/wiki/Template_talk:<name>
     """
     url = 'http://{}.wikipedia.org/w/api.php'.format(lang)
+    skip_page = None
+
+    if skip_users_and_templates:
+        skip_page = (
+            'user:', 
+            'utente:', 
+
+            'user_talk:'
+            'discussioni_utente:',
+            
+            'template:', 
+
+            'template_talk:',
+            'discussioni_template:',
+        )
+
     params = {
         'action': 'query',
         'list': 'embeddedin',
@@ -219,13 +244,21 @@ def pages_with_template(template, lang='en', eicontinue=None):
     res = requests.get(url, params=params)
     if not res.ok:
         res.raise_for_status()
-    result = [x['title'] for x in res.json()['query']['embeddedin']]
+
+    if skip_users_and_templates:
+        result = [x['title'] for x in res.json()['query']['embeddedin'] 
+            if not x['title'].lower().startswith(skip_page)]
+    else:
+        result = [x['title'] for x in res.json()['query']['embeddedin']]
+
     try:
         eicontinue = res.json()['query-continue']['embeddedin']['eicontinue']
     except KeyError:
         eicontinue = None
     if eicontinue:
-        result += pages_with_template(template, lang, eicontinue)
+        result += pages_with_template(
+            template, lang, eicontinue, skip_users_and_templates
+            )
     return result
 
 
