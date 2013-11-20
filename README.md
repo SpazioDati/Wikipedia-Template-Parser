@@ -16,6 +16,11 @@ from wikipedia_template_parser import pages_with_template
 pages_with_template("Template:Infobox_Italian_comune", lang="en")
 ```
 
+By default the script doesn't return user and template pages; if you want them to be returned, you can set the `skip_users_and_templates` param:
+```python
+pages_with_template("Template:Infobox_Italian_comune", lang="en", skip_users_and_templates=False)
+```
+
 Get key/value data from all templates used in the given page
 ```python
 from wikipedia_template_parser import data_from_templates
