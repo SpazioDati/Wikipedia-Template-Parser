@@ -28,6 +28,26 @@ from wikipedia_template_parser import data_from_templates
 data_from_templates("Trento", lang="it")
 ```
 
+Instead of requesting the page on the fly, you can pass the wikitext to
+`data_from_templates` and have it parsed:
+```python
+
+# get just the text
+pisa_text = get_wikitext_from_api("Torre pendente di Pisa", "it")
+
+# an alternative could be be:
+#   with open('some_file_with_wikitext.txt', 'r') as in_:
+#        pisa_text = in_.read().decode('utf-8')
+
+# manipulate the text as you wish
+# ... do stuff ...
+
+data_from_templates("Torre pendente di Pisa",
+                    lang="it",
+                    wikitext=pisa_text
+                    )
+```
+
 For pages containing the {{coord}} template (it.wiki), data are parsed 
 and returned as a dictionary with 'lat' and 'lon' keys:
 ```python
