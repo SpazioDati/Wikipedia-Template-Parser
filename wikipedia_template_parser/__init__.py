@@ -63,15 +63,22 @@ def get_wikitext_from_api(page, lang='en'):
     try:
         result = json_pages.values()[0]['revisions'][0]['*']
     except:
-        raise ValueError('Page {page} does not exist on {lang}.wikipedia'.format(
-                         page=page, lang=lang))
+        raise ValueError('Page {page} does not exist on '
+                         '{lang}.wikipedia'.format(page=page, lang=lang))
 
     return result
 
 
 def extract_data_from_coord(template):
     coord = {'lat': '', 'lon': ''}
-    optionalpars = ['dim', 'globe', 'region', 'scale', 'source', 'type', 'display']
+    optionalpars = ['dim',
+                    'globe',
+                    'region',
+                    'scale',
+                    'source',
+                    'type',
+                    'display'
+                    ]
 
     todel = set()
     for k, v in template.iteritems():
@@ -155,7 +162,7 @@ def augment_data_with_coords(data, coords_fiels):
 CURLY = re.compile(r'\{\{([^\}]*)\}\}')
 
 
-def data_from_templates(page, lang='en', extra_coords=None):
+def data_from_templates(page, lang='en', extra_coords=None, wikitext=None):
     """
     Given a page title and the language returns a list with the data of every
     template included in the page.
@@ -164,7 +171,10 @@ def data_from_templates(page, lang='en', extra_coords=None):
     of the template.
     """
     store = []
-    content = ' '.join(get_wikitext_from_api(page, lang).split())
+    if wikitext is None:
+        content = ' '.join(get_wikitext_from_api(page, lang).split())
+    else:
+        content = ' '.join(wikitext.split())
     #match = re.findall(r'\{\{([^}]+)\}\}', content)
     match = mwparserfromhell.parse(content).filter_templates()
     for template_string in match:
@@ -209,7 +219,7 @@ def pages_with_template(template, lang='en', eicontinue=None,
 
     template is something like 'Template:Infobox_museum'
 
-    skip_users_and_templates allows you to skip users and temolates page like
+    skip_users_and_templates allows you to skip users and templates page like
     * http://en.wikipedia.org/wiki/User:<name>
     * http://en.wikipedia.org/wiki/User_talk:<name>
     * http://en.wikipedia.org/wiki/Template:<name>
@@ -220,13 +230,13 @@ def pages_with_template(template, lang='en', eicontinue=None,
 
     if skip_users_and_templates:
         skip_page = (
-            'user:', 
-            'utente:', 
+            'user:',
+            'utente:',
 
             'user_talk:'
             'discussioni_utente:',
-            
-            'template:', 
+
+            'template:',
 
             'template_talk:',
             'discussioni_template:',
@@ -246,8 +256,9 @@ def pages_with_template(template, lang='en', eicontinue=None,
         res.raise_for_status()
 
     if skip_users_and_templates:
-        result = [x['title'] for x in res.json()['query']['embeddedin'] 
-            if not x['title'].lower().startswith(skip_page)]
+        result = [x['title'] for x in res.json()['query']['embeddedin']
+                  if not x['title'].lower().startswith(skip_page)
+                  ]
     else:
         result = [x['title'] for x in res.json()['query']['embeddedin']]
 
@@ -256,9 +267,11 @@ def pages_with_template(template, lang='en', eicontinue=None,
     except KeyError:
         eicontinue = None
     if eicontinue:
-        result += pages_with_template(
-            template, lang, eicontinue, skip_users_and_templates
-            )
+        result += pages_with_template(template,
+                                      lang,
+                                      eicontinue,
+                                      skip_users_and_templates
+                                      )
     return result
 
 
@@ -287,13 +300,16 @@ def pages_in_category(catname, lang='en', maxdepth=0,
     res = requests.get(url, params=params)
     if not res.ok:
         res.raise_for_status()
-    result = [x['title'].encode('utf-8') for x in res.json()['query']['categorymembers']
-              if x['ns'] == 0]
+    result = [x['title'].encode('utf-8')
+              for x in res.json()['query']['categorymembers']
+              if x['ns'] == 0
+              ]
     subcats = [x['title'].replace(' ', '_')
                for x in res.json()['query']['categorymembers']
                if x['ns'] == 14 and x['title'] not in visitedcats]
     try:
-        cmcontinue = res.json()['query-continue']['categorymembers']['cmcontinue']
+        query_continue = res.json()['query-continue']
+        cmcontinue = query_continue['categorymembers']['cmcontinue']
     except KeyError:
         cmcontinue = None
     if cmcontinue:
@@ -319,13 +335,18 @@ def pages_in_category(catname, lang='en', maxdepth=0,
 if __name__ == "__main__":
     print pages_with_template("Template:Edificio_religioso", "it")
     print
-    print pages_in_category("Categoria:Architetture_religiose_d'Italia", "it", maxdepth=20)
+    print pages_in_category("Categoria:Architetture_religiose_d'Italia",
+                            "it",
+                            maxdepth=20
+                            )
     print
     print pages_in_category("Categoria:Chiese_di_Prato", "it")
     print
     print data_from_templates("Chiesa di San Pantaleo (Zoagli)", "it")
     print
-    print data_from_templates(urllib.quote("Chiesa di San Pantaleo (Zoagli)"), "it")
+    print data_from_templates(urllib.quote("Chiesa di San Pantaleo (Zoagli)"),
+                              "it"
+                              )
     print
     print get_wikitext_from_api("Chiesa di San Petronio", "it")
     print
@@ -335,4 +356,15 @@ if __name__ == "__main__":
     print
     print data_from_templates("Telenorba", "it")
     print
-    print data_from_templates("Falchi Ugento", "it")
+    print data_from_templates("Pallavolo Falchi Ugento", "it")
+    print
+    pisa_text = get_wikitext_from_api("Torre pendente di Pisa", "it")
+    tmpl_from_text = data_from_templates("Torre pendente di Pisa",
+                                         lang="it",
+                                         wikitext=pisa_text
+                                         )
+    tmpl_from_api = data_from_templates("Torre pendente di Pisa", "it")
+    if tmpl_from_text == tmpl_from_api:
+        print "Templates from text and from API match"
+    else:
+        print "W00t?!"
